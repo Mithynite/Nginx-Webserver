@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Page</title>
+<style>
+        body {
+		color: white;
+	        font-family: Arial, sans-serif;
+		background-color: rgb(15, 50, 63);		
+        }
+         h1 {
+            text-align: center;
+        }
+.blogContainer{
+	width:100%;
+	display:flex;
+	flex-direction:column;
+	align-items: center;
+  	justify-content: center;	
+}
+#blogForm{
+	display:flex;
+        align-items: center;
+        justify-content: center;
+flex-direction:column;
+	width:80%;
+
+}
+        form {
+	width:100%;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .blog-posts {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Blog Page</h1>
+<div class="blogContainer">
+    <!-- Blog Post Form -->
+    <div id="blogForm">
+        <h2>Add a new blog post</h2>
+        <form id="addBlogForm">
+<label for="title">Title:</label>
+            <input type="text" id="title" required><br>
+
+            <label for="author_name">Author Name:</label>
+            <input type="text" id="author_name" required><br>
+
+            <label for="author_surname">Author Surname:</label>
+            <input type="text" id="author_surname" required><br>
+
+            <label for="content">Content:</label>
+            <textarea id="content" required></textarea><br>
+
+            <button type="submit">Add Blog</button>
+        </form>
+    </div>
+
+    <!-- Blog Posts List -->
+    <h2>All Blog Posts</h2>
+    <div id="blogPosts"></div>
+</div>
+<script>
+    // Fetch blog posts when the page loads
+    window.onload = function () {
+        fetchBlogs();
+    };
+
+    // Fetch blog posts from the server
+    function fetchBlogs() {
+        fetch('/api/getBlogs')
+            .then(response => response.json())
+            .then(data => {
+                const blogPostsDiv = document.getElementById('blogPosts');
+                blogPostsDiv.innerHTML = ''; // Clear old content
+                data.forEach(post => {
+                    const postDiv = document.createElement('div');
+                    postDiv.classList.add('blog-post');
+                    postDiv.innerHTML = `
+                        <h3>${post.title}</h3>
+                        <p><strong>Author:</strong> ${post.author_name} ${post.author_surname}</p>
+                        <p>${post.content}</p>
+                        <hr>
+                    `;
+                    blogPostsDiv.appendChild(postDiv);
+                });
+            })
+            .catch(error => console.error('Error fetching blogs:', error));
+    }
+
+    // Function to validate author credentials
+    function validateAuthor(name, surname) {
+        // Example validation: check if both name and surname are non-empty
+        return name.trim() !== '' && surname.trim() !== '';
+    }
+
+    // Add a new blog post
+const addBlogForm = document.getElementById('addBlogForm');
+addBlogForm.onsubmit = function (e) {
+    e.preventDefault(); // Prevent form submission from reloading the page
+
+    const title = document.getElementById('title').value;
+    const author_name = document.getElementById('author_name').value;
+    const author_surname = document.getElementById('author_surname').value;
+    const content = document.getElementById('content').value;
+
+    // Check if author exists
+    fetch('/api/checkAuthor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author_name, author_surname })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.exists) {
+            alert('Author does not exist. Please add the author first.');
+            return; // Stop submission if author does not exist
+        }
+
+        // Proceed to add the blog post
+        fetch('/api/addBlog', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content, author_name, author_surname })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Blog added successfully!');
+            fetchBlogs(); // Refresh the blog list
+        })
+        .catch(error => console.error('Error adding blog:', error));
+    })
+    .catch(error => console.error('Error checking author:', error));
+};
+
+</script>
+
+</body>
+</html>
