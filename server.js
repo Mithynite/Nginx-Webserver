@@ -12,7 +12,7 @@ app.use(cors());
 
 // MySQL Database connection (replace 'your_mysql_ip' with your MySQL server's public IP)
 const db = mysql.createConnection({
-    host: '35.159.236.170', // MySQL server IP address
+    host: '3.79.156.2', // MySQL server IP address
     user: 'hofman',
     password: 'NewP4ssword_',
     database: 'Blog_database',
