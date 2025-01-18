@@ -1,22 +1,21 @@
-
-// server.js
 const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
+const path = require('path');
 
 // Middleware
 app.use(bodyParser.json());
 app.use(cors());
 
-// MySQL Database connection (replace 'your_mysql_ip' with your MySQL server's public IP)
+// MySQL Database connection
 const db = mysql.createConnection({
-    host: 'webappdatabase.cjamoe6ew932.eu-central-1.rds.amazonaws.com',//'3.79.156.2', // MySQL server IP address
-    user: admin,//'hofman',
-    password: 'jakojajedujako',//'NewP4ssword_',
-    database: 'Blog_database',
-    port:3306
+    host: 'blog-database.crcsee06oz8d.eu-central-1.rds.amazonaws.com', // RDS endpoint
+    user: 'admin', // Master username
+    password: 'jakojajedujako', // Password
+    database: 'Blogs', // Database name
+    port: 3306 // Port for MySQL
 });
 
 // Connect to the database
@@ -28,10 +27,18 @@ db.connect((err) => {
     console.log('Connected to the MySQL database.');
 });
 
-// API endpoint to get all blog posts
-app.get('/api/getBlogs', (req, res) => {
+// REST API
+
+// GET /api/about - Retrieve API documentation HTML page with all available URI options so you would know how it works
+app.get('/api/about', (req, res) => {
+        res.sendFile(path.join(__dirname, 'html', 'api_documentation.html'));
+});
+
+//GET /api/blog - Retrieve all blog posts
+app.get('/api/blog', (req, res) => {
     const query = `
-        SELECT Blog.title, Blog.content, Author.name AS author_name, Author.surname AS author_surname
+        SELECT Blog.id, Blog.title, Blog.content, Blog.timestamp,
+               Author.name AS author_name, Author.surname AS author_surname
         FROM Blog
         JOIN Author ON Blog.author_id = Author.id
     `;
@@ -42,15 +49,15 @@ app.get('/api/getBlogs', (req, res) => {
             res.status(500).json({ message: 'Database query error' });
             return;
         }
-        // Send the results as JSON to the frontend
         res.json(results);
     });
 });
 
-
-// API endpoint to add a new blog post
-app.post('/api/addBlog', (req, res) => {
+// POST /api/blog - Create a new blog post
+app.post('/api/blog', (req, res) => {
     const { title, content, author_name, author_surname } = req.body;
+
+    console.log('Received data to add blog:', req.body);
 
     // Check if author exists first
     const checkAuthorQuery = 'SELECT id FROM Author WHERE name = ? AND surname = ?';
@@ -61,6 +68,7 @@ app.post('/api/addBlog', (req, res) => {
         }
 
         if (results.length === 0) {
+            console.log('Author not found:', author_name, author_surname);
             return res.status(400).json({ message: 'Author does not exist. Please add the author first.' });
         }
 
@@ -76,7 +84,7 @@ app.post('/api/addBlog', (req, res) => {
     });
 });
 
-// API endpoint to check if the author exists
+/*// API endpoint to check if the author exists
 app.post('/api/checkAuthor', (req, res) => {
     const { author_name, author_surname } = req.body;
     const query = 'SELECT id FROM Author WHERE name = ? AND surname = ?';
@@ -86,19 +94,85 @@ app.post('/api/checkAuthor', (req, res) => {
             console.error(err);
             return res.status(500).json({ message: 'Database query error' });
         }
-        if (results.length > 0) {
-            // Author exists
-            res.json({ exists: true, author_id: results[0].id });
-        } else {
-            // Author does not exist
-            res.json({ exists: false });
+        res.json({ exists: results.length > 0 });
+    });
+});*/
+
+// GET /api/blog/:id - Retrieve a blog post by ID
+app.get('/api/blog/:id', (req, res) => {
+    const blogId = req.params.id;
+    const query = `
+        SELECT Blog.id, Blog.title, Blog.content, Author.name AS author_name, Author.surname AS author_surname
+        FROM Blog
+        JOIN Author ON Blog.author_id = Author.id
+        WHERE Blog.id = ?
+    `;
+db.query(query, [blogId], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Database query error' });
         }
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'Blog post not found' });
+        }
+        res.json(results[0]);
     });
 });
 
+// DELETE /api/blog/:id - Delete a blog post by ID
+app.delete('/api/blog/:id', (req, res) => {
+    const blogId = req.params.id;
+    const deleteQuery = 'DELETE FROM Blog WHERE id = ?';
+
+    db.query(deleteQuery, [blogId], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Database delete error' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Blog post not found' });
+        }
+        res.json({ message: 'Blog post deleted successfully' });
+    });
+});
+
+// PATCH /api/blog/:id - Partially update a blog post by ID
+app.patch('/api/blog/:id', (req, res) => {
+    const blogId = req.params.id;
+    const { title, content } = req.body;
+    let updateFields = [];
+    let updateValues = [];
+
+    // Construct dynamic update query based on provided fields
+    if (title) {
+        updateFields.push('title = ?');
+        updateValues.push(title);
+    }
+    if (content) {
+        updateFields.push('content = ?');
+        updateValues.push(content);
+    }
+    updateValues.push(blogId); // Add ID to the end of the values array
+
+    if (updateFields.length === 0) {
+        return res.status(400).json({ message: 'No fields provided for update' });
+    }
+
+    const updateQuery = `UPDATE Blog SET ${updateFields.join(', ')} WHERE id = ?`;
+    db.query(updateQuery, updateValues, (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ message: 'Database update error' });
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Blog post not found' });
+        }
+        res.json({ message: 'Blog post updated successfully' });
+    });
+});
 
 // Start the server
 const port = 3000;
 app.listen(port, () => {
-    console.log(`Server is running on the current IP with port:{port}`);
+    console.log(`Server is running on http://54.93.165.202:${port}`);
 });
