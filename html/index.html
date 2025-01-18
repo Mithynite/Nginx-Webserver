@@ -4,32 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blog Page</title>
-<style>
+    <style>
         body {
-		color: white;
-	        font-family: Arial, sans-serif;
-		background-color: rgb(15, 50, 63);		
+            color: white;
+            font-family: Arial, sans-serif;
+            background-color: rgb(15, 50, 63);
         }
-         h1 {
+        h1 {
             text-align: center;
         }
-.blogContainer{
-	width:100%;
-	display:flex;
-	flex-direction:column;
-	align-items: center;
-  	justify-content: center;	
-}
-#blogForm{
-	display:flex;
-        align-items: center;
-        justify-content: center;
-flex-direction:column;
-	width:80%;
-
-}
+        .blogContainer {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #blogForm {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            width: 80%;
+        }
         form {
-	width:100%;
+            width: 100%;
         }
         label {
             display: block;
@@ -57,105 +56,133 @@ flex-direction:column;
 </head>
 <body>
     <h1>Blog Page</h1>
-<div class="blogContainer">
-    <!-- Blog Post Form -->
-    <div id="blogForm">
-        <h2>Add a new blog post</h2>
-        <form id="addBlogForm">
-<label for="title">Title:</label>
-            <input type="text" id="title" required><br>
+    <div class="blogContainer">
+        <!-- Blog Post Form -->
+        <div id="blogForm">
+            <h2>Add a new blog post</h2>
+            <form id="addBlogForm">
+                <label for="title">Title:</label>
+                <input type="text" id="title" required><br>
 
-            <label for="author_name">Author Name:</label>
-            <input type="text" id="author_name" required><br>
+                <label for="author_name">Author Name:</label>
+                <input type="text" id="author_name" required><br>
 
-            <label for="author_surname">Author Surname:</label>
-            <input type="text" id="author_surname" required><br>
+                <label for="author_surname">Author Surname:</label>
+                <input type="text" id="author_surname" required><br>
 
-            <label for="content">Content:</label>
-            <textarea id="content" required></textarea><br>
+                <label for="content">Content:</label>
+                <textarea id="content" required></textarea><br>
 
-            <button type="submit">Add Blog</button>
-        </form>
+                <button type="submit">Add Blog</button>
+            </form>
+        </div>
+
+        <!-- Blog Posts List -->
+        <h2>All Blog Posts</h2>
+        <div id="blogPosts"></div>
     </div>
 
-    <!-- Blog Posts List -->
-    <h2>All Blog Posts</h2>
-    <div id="blogPosts"></div>
-</div>
-<script>
-    // Fetch blog posts when the page loads
-    window.onload = function () {
-        fetchBlogs();
-    };
+    <script>
+// Load all blog posts when the page loads
+        window.onload = function () {
+            fetchBlogs();
+        };
 
-    // Fetch blog posts from the server
-    function fetchBlogs() {
-        fetch('/api/getBlogs')
-            .then(response => response.json())
-            .then(data => {
-                const blogPostsDiv = document.getElementById('blogPosts');
-                blogPostsDiv.innerHTML = ''; // Clear old content
-                data.forEach(post => {
-                    const postDiv = document.createElement('div');
-                    postDiv.classList.add('blog-post');
-                    postDiv.innerHTML = `
-                        <h3>${post.title}</h3>
-                        <p><strong>Author:</strong> ${post.author_name} ${post.author_surname}</p>
-                        <p>${post.content}</p>
-                        <hr>
-                    `;
-                    blogPostsDiv.appendChild(postDiv);
-                });
-            })
-            .catch(error => console.error('Error fetching blogs:', error));
-    }
-
-    // Function to validate author credentials
-    function validateAuthor(name, surname) {
-        // Example validation: check if both name and surname are non-empty
-        return name.trim() !== '' && surname.trim() !== '';
-    }
-
-    // Add a new blog post
-const addBlogForm = document.getElementById('addBlogForm');
-addBlogForm.onsubmit = function (e) {
-    e.preventDefault(); // Prevent form submission from reloading the page
-
-    const title = document.getElementById('title').value;
-    const author_name = document.getElementById('author_name').value;
-    const author_surname = document.getElementById('author_surname').value;
-    const content = document.getElementById('content').value;
-
-    // Check if author exists
-    fetch('/api/checkAuthor', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ author_name, author_surname })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (!data.exists) {
-            alert('Author does not exist. Please add the author first.');
-            return; // Stop submission if author does not exist
+        // Fetch all blog posts from the server
+        function fetchBlogs() {
+            fetch('/api/blog')
+                .then(response => response.json())
+                .then(data => {
+                    const blogPostsDiv = document.getElementById('blogPosts');
+                    blogPostsDiv.innerHTML = ''; // Clear previous posts
+                    data.forEach(post => {
+                        const postDiv = document.createElement('div');
+                        postDiv.classList.add('blog-post');
+                        postDiv.innerHTML = `
+                            <h3>${post.title}</h3>
+                            <p><strong>Author:</strong> ${post.author_name} ${post.author_surname}</p>
+                            <p>${post.content}</p>
+                            <button onclick="viewBlog(${post.id})">View</button>
+                            <button onclick="editBlogPrompt(${post.id})">Edit</button>
+                            <button onclick="deleteBlog(${post.id})">Delete</button>
+                        `;
+                        blogPostsDiv.appendChild(postDiv);
+                    });
+                })
+                .catch(error => console.error('Error fetching blogs:', error));
         }
 
-        // Proceed to add the blog post
-        fetch('/api/addBlog', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, content, author_name, author_surname })
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert('Blog added successfully!');
-            fetchBlogs(); // Refresh the blog list
-        })
-        .catch(error => console.error('Error adding blog:', error));
-    })
-    .catch(error => console.error('Error checking author:', error));
-};
+        // View a blog post by ID
+        function viewBlog(blogId) {
+            fetch(`/api/blog/${blogId}`)
+                .then(response => response.json())
+                .then(post => {
+                    alert(`Title: ${post.title}\nAuthor: ${post.author_name} ${post.author_surname}\nContent: ${post.content}`);
+                })
+                .catch(error => console.error(`Error fetching blog with ID ${blogId}:`, error));
+        }
 
-</script>
+        // Delete a blog post by ID
+        function deleteBlog(blogId) {
+            fetch(`/api/blog/${blogId}`, { method: 'DELETE' })
+                .then(response => {
+                    if (!response.ok) throw new Error('Could not delete blog');
+                    alert('Blog deleted successfully');
+                    fetchBlogs(); // Refresh list
+                })
+                .catch(error => console.error(`Error deleting blog with ID ${blogId}:`, error));
+        }
 
+        // Prompt for blog post updates and send PATCH request
+        function editBlogPrompt(blogId) {
+            const newTitle = prompt("Enter new title (leave blank to keep current):");
+            const newContent = prompt("Enter new content (leave blank to keep current):");
+
+            const updateData = {};
+            if (newTitle) updateData.title = newTitle;
+            if (newContent) updateData.content = newContent;
+
+            if (Object.keys(updateData).length === 0) {
+                alert("No changes provided.");
+                return;
+            }
+
+            fetch(`/api/blog/${blogId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Could not update blog');
+                alert('Blog updated successfully');
+                fetchBlogs(); // Refresh list
+            })
+            .catch(error => console.error(`Error updating blog with ID ${blogId}:`, error));
+        }
+
+        // Add a new blog post
+        const addBlogForm = document.getElementById('addBlogForm');
+        addBlogForm.onsubmit = function (e) {
+            e.preventDefault(); // Prevent page reload
+
+            const title = document.getElementById('title').value;
+            const author_name = document.getElementById('author_name').value;
+            const author_surname = document.getElementById('author_surname').value;
+            const content = document.getElementById('content').value;
+
+            fetch('/api/blog', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content, author_name, author_surname })
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Could not add blog');
+                alert('Blog added successfully');
+                fetchBlogs(); // Refresh list
+                addBlogForm.reset(); // Clear form
+            })
+            .catch(error => console.error('Error adding blog:', error));
+        };
+    </script>
 </body>
 </html>
