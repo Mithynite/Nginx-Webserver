@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>API Documentation</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    color: white;
+                    background-color: rgb(15, 50, 63);
+margin: 5% 20% 20% 20% ;
+                    line-height: 1.6;
+                }
+h1,h2,h3{
+text-align:center;
+}
+       h1,h2 {
+          color: white;
+    }
+h3{
+color:#4CAF50;
+}
+
+                .endpoint {
+
+                }
+                .code {
+                    background-color: white;
+color: rgb(15, 50, 63);
+                    border-left: 6px solid #4CAF50;
+                    padding: 2%;
+font-size: 1.3rem;
+font-family: monospace;
+
+                }
+            </style>
+        </head>
+        <body>
+            <h1>API Documentation</h1>
+            <p><b>Base URL:</b> http://54.93.165.202/api</p>
+
+            <h2>Endpoints</h2>
+
+            <div class="endpoint">
+                <h3>GET /api/blog</h3>
+                <p><b>Explanation:</b> Retrieve all blog posts</p>
+                <div class="code">
+                    <strong>Response:</strong>
+                    <pre>
+Status: 200
+[
+  {
+    "id": "integer",
+    "title": "string",
+    "content": "string",
+    "author_name": "string",
+    "author_surname": "string",
+    "timestamp": "ISO 8601 string"
+  }
+]
+                    </pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3>POST /api/blog</h3>
+                <p><b>Explanation:</b> Create a new blog post</p>
+                <div class="code">
+                    <strong>Request:</strong>
+                    <pre>
+{
+  "title": "string",
+  "content": "string",
+  "author_name": "string",
+  "author_surname": "string"
+}
+                    </pre>
+                    <strong>Response:</strong>
+                    <pre>
+Status: 201
+{
+  "message": "Blog added successfully",
+  "postId": "integer"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3>GET /api/blog/:id</h3>
+                <p><b>Explanation:</b> Retrieve a blog post by ID</p>
+                <div class="code">
+                    <strong>Response:</strong>
+                    <pre>
+Status: 200
+{
+  "id": "integer",
+  "title": "string",
+  "content": "string",
+  "author_name": "string",
+  "author_surname": "string",
+  "timestamp": "ISO 8601 string"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3>DELETE /api/blog/:id</h3>
+                <p><b>Explanation:</b> Delete a blog post by ID</p>
+                <div class="code">
+                    <strong>Response:</strong>
+                    <pre>
+Status: 200
+{
+  "message": "Blog post deleted successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <h3>PATCH /api/blog/:id</h3>
+                <p><b>Explanation:</b> Partially update a blog post by ID</p>
+                <div class="code">
+                    <strong>Request:</strong>
+                    <pre>
+{
+  "title": "string (optional)",
+  "content": "string (optional)"
+}
+                    </pre>
+                    <strong>Response:</strong>
+                    <pre>
+Status: 200
+{
+  "message": "Blog post updated successfully"
+}
+                    </pre>
+                </div>
+            </div>
+
+            <h2>Authorization</h2>
+            <p><b>Explanation:</b> Currently, no authorization is required to access the API. The reason is, I did not manage to finish it :(</p>
+            <div class="code">
+                <strong>Authorization Example:</strong>
+                <pre>
+Authorization: None;
+                </pre>
+            </div>
+        </body>
+        </html>
